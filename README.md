@@ -1,6 +1,10 @@
 # Movie Review API
 
-A simple REST API for managing movie reviews. Built with Node.js core modules only (`http` and `fs`) with no Express or other frameworks.
+This project is a simple Movie Review REST API built with Node.js.
+It uses only the core `http` module for routing and the core `fs` module for saving data.
+The API allows users to create, read, update, delete, and filter movie reviews.
+All review records are stored in a local `data.json` file.
+No Express or external frameworks are used.
 
 ## Requirements
 
