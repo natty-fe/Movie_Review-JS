@@ -1,0 +1,216 @@
+const http = require('http');
+const fs = require('fs');
+
+const PORT = process.env.PORT || 3000;
+const DATA_FILE = './data.json';
+
+function sendJson(res, statusCode, data) {
+  res.writeHead(statusCode, { 'Content-Type': 'application/json' });
+  res.end(JSON.stringify(data, null, 2));
+}
+
+function readReviews() {
+  try {
+    const fileData = fs.readFileSync(DATA_FILE, 'utf8');
+    return JSON.parse(fileData || '[]');
+  } catch (error) {
+    if (error.code === 'ENOENT') {
+      fs.writeFileSync(DATA_FILE, '[]');
+      return [];
+    }
+
+    throw error;
+  }
+}
+
+function saveReviews(reviews) {
+  fs.writeFileSync(DATA_FILE, JSON.stringify(reviews, null, 2));
+}
+
+function getRequestBody(req) {
+  return new Promise((resolve, reject) => {
+    let body = '';
+
+    req.on('data', (chunk) => {
+      body += chunk.toString();
+    });
+
+    req.on('end', () => {
+      if (!body) {
+        resolve({});
+        return;
+      }
+
+      try {
+        resolve(JSON.parse(body));
+      } catch (error) {
+        reject(new Error('Invalid JSON body'));
+      }
+    });
+
+    req.on('error', reject);
+  });
+}
+
+function getNextId(reviews) {
+  if (reviews.length === 0) {
+    return 1;
+  }
+
+  return Math.max(...reviews.map((review) => review.id)) + 1;
+}
+
+function validateReview(review, isUpdate = false) {
+  const errors = [];
+
+  if (!isUpdate || review.title !== undefined) {
+    if (typeof review.title !== 'string' || review.title.trim() === '') {
+      errors.push('title is required and must be a non-empty string');
+    }
+  }
+
+  if (!isUpdate || review.director !== undefined) {
+    if (typeof review.director !== 'string' || review.director.trim() === '') {
+      errors.push('director is required and must be a non-empty string');
+    }
+  }
+
+  if (!isUpdate || review.rating !== undefined) {
+    if (typeof review.rating !== 'number' || review.rating < 1 || review.rating > 5) {
+      errors.push('rating is required and must be a number from 1 to 5');
+    }
+  }
+
+  if (!isUpdate || review.review !== undefined) {
+    if (typeof review.review !== 'string' || review.review.trim() === '') {
+      errors.push('review is required and must be a non-empty string');
+    }
+  }
+
+  return errors;
+}
+
+function cleanReviewInput(input) {
+  return {
+    title: typeof input.title === 'string' ? input.title.trim() : input.title,
+    director: typeof input.director === 'string' ? input.director.trim() : input.director,
+    rating: input.rating,
+    review: typeof input.review === 'string' ? input.review.trim() : input.review
+  };
+}
+
+async function handleRequest(req, res) {
+  const url = new URL(req.url, `http://${req.headers.host}`);
+  const pathParts = url.pathname.split('/').filter(Boolean);
+
+  if (pathParts[0] !== 'reviews') {
+    sendJson(res, 404, { message: 'Route not found' });
+    return;
+  }
+
+  const reviews = readReviews();
+  const id = pathParts[1] ? Number(pathParts[1]) : null;
+
+  if (pathParts.length > 2 || (pathParts[1] && !Number.isInteger(id))) {
+    sendJson(res, 400, { message: 'Invalid review ID' });
+    return;
+  }
+
+  if (req.method === 'GET' && pathParts.length === 1) {
+    sendJson(res, 200, reviews);
+    return;
+  }
+
+  if (req.method === 'GET' && pathParts.length === 2) {
+    const review = reviews.find((item) => item.id === id);
+
+    if (!review) {
+      sendJson(res, 404, { message: 'Review not found' });
+      return;
+    }
+
+    sendJson(res, 200, review);
+    return;
+  }
+
+  if (req.method === 'POST' && pathParts.length === 1) {
+    const body = cleanReviewInput(await getRequestBody(req));
+    const errors = validateReview(body);
+
+    if (errors.length > 0) {
+      sendJson(res, 400, { message: 'Validation failed', errors });
+      return;
+    }
+
+    const newReview = {
+      id: getNextId(reviews),
+      ...body
+    };
+
+    reviews.push(newReview);
+    saveReviews(reviews);
+    sendJson(res, 201, newReview);
+    return;
+  }
+
+  if (req.method === 'PUT' && pathParts.length === 2) {
+    const reviewIndex = reviews.findIndex((item) => item.id === id);
+
+    if (reviewIndex === -1) {
+      sendJson(res, 404, { message: 'Review not found' });
+      return;
+    }
+
+    const body = cleanReviewInput(await getRequestBody(req));
+    const errors = validateReview(body, true);
+
+    if (errors.length > 0) {
+      sendJson(res, 400, { message: 'Validation failed', errors });
+      return;
+    }
+
+    reviews[reviewIndex] = {
+      ...reviews[reviewIndex],
+      ...body,
+      id
+    };
+
+    saveReviews(reviews);
+    sendJson(res, 200, reviews[reviewIndex]);
+    return;
+  }
+
+  if (req.method === 'DELETE' && pathParts.length === 2) {
+    const reviewIndex = reviews.findIndex((item) => item.id === id);
+
+    if (reviewIndex === -1) {
+      sendJson(res, 404, { message: 'Review not found' });
+      return;
+    }
+
+    const deletedReview = reviews.splice(reviewIndex, 1)[0];
+    saveReviews(reviews);
+    sendJson(res, 200, {
+      message: 'Review deleted successfully',
+      deletedReview
+    });
+    return;
+  }
+
+  sendJson(res, 405, { message: 'Method not allowed for this route' });
+}
+
+const server = http.createServer((req, res) => {
+  handleRequest(req, res).catch((error) => {
+    if (error.message === 'Invalid JSON body') {
+      sendJson(res, 400, { message: error.message });
+      return;
+    }
+
+    sendJson(res, 500, { message: 'Internal server error' });
+  });
+});
+
+server.listen(PORT, () => {
+  console.log(`Movie Review API is running on http://localhost:${PORT}`);
+});
