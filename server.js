@@ -91,12 +91,25 @@ function validateReview(review, isUpdate = false) {
 }
 
 function cleanReviewInput(input) {
-  return {
-    title: typeof input.title === 'string' ? input.title.trim() : input.title,
-    director: typeof input.director === 'string' ? input.director.trim() : input.director,
-    rating: input.rating,
-    review: typeof input.review === 'string' ? input.review.trim() : input.review
-  };
+  const cleanInput = {};
+
+  if (input.title !== undefined) {
+    cleanInput.title = typeof input.title === 'string' ? input.title.trim() : input.title;
+  }
+
+  if (input.director !== undefined) {
+    cleanInput.director = typeof input.director === 'string' ? input.director.trim() : input.director;
+  }
+
+  if (input.rating !== undefined) {
+    cleanInput.rating = input.rating;
+  }
+
+  if (input.review !== undefined) {
+    cleanInput.review = typeof input.review === 'string' ? input.review.trim() : input.review;
+  }
+
+  return cleanInput;
 }
 
 async function handleRequest(req, res) {

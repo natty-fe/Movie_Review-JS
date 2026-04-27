@@ -12,5 +12,12 @@
     "director": "David Fincher",
     "rating": 4,
     "review": "A sharp drama about ambition, friendship, and technology."
+  },
+  {
+    "id": 3,
+    "title": "Interstellar",
+    "director": "Christopher Nolan",
+    "rating": 4,
+    "review": "A beautiful space movie with emotional storytelling."
   }
 ]
