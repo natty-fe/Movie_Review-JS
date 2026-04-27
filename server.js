@@ -75,9 +75,27 @@ function validateReview(review, isUpdate = false) {
     }
   }
 
+  if (!isUpdate || review.genre !== undefined) {
+    if (typeof review.genre !== 'string' || review.genre.trim() === '') {
+      errors.push('genre is required and must be a non-empty string');
+    }
+  }
+
+  if (!isUpdate || review.releaseYear !== undefined) {
+    if (!Number.isInteger(review.releaseYear) || review.releaseYear < 1888) {
+      errors.push('releaseYear is required and must be a valid year');
+    }
+  }
+
   if (!isUpdate || review.rating !== undefined) {
     if (typeof review.rating !== 'number' || review.rating < 1 || review.rating > 5) {
       errors.push('rating is required and must be a number from 1 to 5');
+    }
+  }
+
+  if (!isUpdate || review.watched !== undefined) {
+    if (typeof review.watched !== 'boolean') {
+      errors.push('watched is required and must be true or false');
     }
   }
 
@@ -101,8 +119,20 @@ function cleanReviewInput(input) {
     cleanInput.director = typeof input.director === 'string' ? input.director.trim() : input.director;
   }
 
+  if (input.genre !== undefined) {
+    cleanInput.genre = typeof input.genre === 'string' ? input.genre.trim() : input.genre;
+  }
+
+  if (input.releaseYear !== undefined) {
+    cleanInput.releaseYear = input.releaseYear;
+  }
+
   if (input.rating !== undefined) {
     cleanInput.rating = input.rating;
+  }
+
+  if (input.watched !== undefined) {
+    cleanInput.watched = input.watched;
   }
 
   if (input.review !== undefined) {
@@ -110,6 +140,43 @@ function cleanReviewInput(input) {
   }
 
   return cleanInput;
+}
+
+function filterReviews(reviews, searchParams) {
+  let filteredReviews = reviews;
+  const title = searchParams.get('title');
+  const director = searchParams.get('director');
+  const genre = searchParams.get('genre');
+  const rating = searchParams.get('rating');
+  const watched = searchParams.get('watched');
+
+  if (title) {
+    filteredReviews = filteredReviews.filter((review) =>
+      review.title.toLowerCase().includes(title.toLowerCase())
+    );
+  }
+
+  if (director) {
+    filteredReviews = filteredReviews.filter((review) =>
+      review.director.toLowerCase().includes(director.toLowerCase())
+    );
+  }
+
+  if (genre) {
+    filteredReviews = filteredReviews.filter((review) =>
+      review.genre.toLowerCase() === genre.toLowerCase()
+    );
+  }
+
+  if (rating) {
+    filteredReviews = filteredReviews.filter((review) => review.rating === Number(rating));
+  }
+
+  if (watched) {
+    filteredReviews = filteredReviews.filter((review) => review.watched === (watched === 'true'));
+  }
+
+  return filteredReviews;
 }
 
 async function handleRequest(req, res) {
@@ -130,7 +197,7 @@ async function handleRequest(req, res) {
   }
 
   if (req.method === 'GET' && pathParts.length === 1) {
-    sendJson(res, 200, reviews);
+    sendJson(res, 200, filterReviews(reviews, url.searchParams));
     return;
   }
 
@@ -155,9 +222,12 @@ async function handleRequest(req, res) {
       return;
     }
 
+    const now = new Date().toISOString();
     const newReview = {
       id: getNextId(reviews),
-      ...body
+      ...body,
+      createdAt: now,
+      updatedAt: now
     };
 
     reviews.push(newReview);
@@ -185,7 +255,8 @@ async function handleRequest(req, res) {
     reviews[reviewIndex] = {
       ...reviews[reviewIndex],
       ...body,
-      id
+      id,
+      updatedAt: new Date().toISOString()
     };
 
     saveReviews(reviews);

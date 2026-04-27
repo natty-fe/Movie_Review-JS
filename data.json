@@ -3,21 +3,36 @@
     "id": 1,
     "title": "Inception",
     "director": "Christopher Nolan",
+    "genre": "Science Fiction",
+    "releaseYear": 2010,
     "rating": 5,
-    "review": "A smart science fiction movie with memorable visuals."
+    "watched": true,
+    "review": "A smart science fiction movie with memorable visuals.",
+    "createdAt": "2026-04-26T12:00:00.000Z",
+    "updatedAt": "2026-04-26T12:00:00.000Z"
   },
   {
     "id": 2,
     "title": "The Social Network",
     "director": "David Fincher",
+    "genre": "Drama",
+    "releaseYear": 2010,
     "rating": 4,
-    "review": "A sharp drama about ambition, friendship, and technology."
+    "watched": true,
+    "review": "A sharp drama about ambition, friendship, and technology.",
+    "createdAt": "2026-04-26T12:05:00.000Z",
+    "updatedAt": "2026-04-26T12:05:00.000Z"
   },
   {
     "id": 3,
     "title": "Interstellar",
     "director": "Christopher Nolan",
+    "genre": "Science Fiction",
+    "releaseYear": 2014,
     "rating": 4,
-    "review": "A beautiful space movie with emotional storytelling."
+    "watched": true,
+    "review": "A beautiful space movie with emotional storytelling.",
+    "createdAt": "2026-04-26T12:10:00.000Z",
+    "updatedAt": "2026-04-26T12:10:00.000Z"
   }
 ]
