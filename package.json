@@ -1,0 +1,17 @@
+{
+  "name": "movie-review-api",
+  "version": "1.0.0",
+  "description": "A simple Movie Review REST API built with Node.js core http and fs modules.",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js"
+  },
+  "keywords": [
+    "nodejs",
+    "http",
+    "fs",
+    "rest-api"
+  ],
+  "author": "",
+  "license": "ISC"
+}

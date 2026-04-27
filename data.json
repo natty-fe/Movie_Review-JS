@@ -1,0 +1,16 @@
+[
+  {
+    "id": 1,
+    "title": "Inception",
+    "director": "Christopher Nolan",
+    "rating": 5,
+    "review": "A smart science fiction movie with memorable visuals."
+  },
+  {
+    "id": 2,
+    "title": "The Social Network",
+    "director": "David Fincher",
+    "rating": 4,
+    "review": "A sharp drama about ambition, friendship, and technology."
+  }
+]
